@@ -66,38 +66,71 @@ export async function login(req: Request, res: Response) {
 export async function refresh(req: Request, res: Response) {
   try {
     const token = req.cookies[REFRESH_COOKIE_NAME];
-    if (!token) return res.status(401).json({ message: "No refresh token" });
 
-    const decoded = verifyRefreshToken(token) as any;
-    const userId = decoded.userId;
-
-    // verify token matches stored value (prevents reuse after logout)
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.refreshToken !== token) {
-      return res.status(401).json({ message: "Invalid refresh token" });
+    // 1) No cookie -> harmless response (no session)
+    if (!token) {
+      return res.status(200).json({ accessToken: null });
     }
 
-    const accessToken = signAccessToken({ userId: user.id, email: user.email });
-    const refreshToken = signRefreshToken({ userId: user.id });
+    // 2) Try to verify token and find the user
+    let decoded: any;
+    try {
+      decoded = verifyRefreshToken(token) as any;
+    } catch (verifyErr: any) {
+      // token invalid or expired -> clear cookie and return no-session
+      console.debug(
+        "Refresh token verify failed:",
+        verifyErr?.message ?? verifyErr
+      );
+      // clear client cookie (path + httpOnly + same flags)
+      res.cookie(REFRESH_COOKIE_NAME, "", {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        path: "/",
+        maxAge: 0,
+      });
+      return res.status(200).json({ accessToken: null });
+    }
 
-    // rotate refresh token
+    const userId = decoded.userId;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    // 3) No user or mismatch -> clear cookie and return no-session
+    if (!user || user.refreshToken !== token) {
+      console.debug("Refresh no user or token mismatch for userId:", userId);
+      res.cookie(REFRESH_COOKIE_NAME, "", {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        path: "/",
+        maxAge: 0,
+      });
+      return res.status(200).json({ accessToken: null });
+    }
+
+    // 4) All good -> issue new tokens and rotate
+    const accessToken = signAccessToken({ userId: user.id, email: user.email });
+    const newRefreshToken = signRefreshToken({ userId: user.id });
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken },
+      data: { refreshToken: newRefreshToken },
     });
 
-    res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
       httpOnly: true,
-      secure: isProd, // true in prod, false in dev
-      sameSite: isProd ? "none" : "lax", // none+secure for cross-site prod; lax for dev
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.json({ accessToken });
-  } catch (err) {
-    console.error(err);
-    return res.status(401).json({ message: "Invalid refresh token" });
+    return res.status(200).json({ accessToken });
+  } catch (err: any) {
+    // unexpected server error -> log and return 500
+    console.error("Refresh handler error:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 }
 
