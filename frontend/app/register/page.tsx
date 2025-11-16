@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../components/useAuth";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function RegisterPage() {
   const { register } = useAuth();
