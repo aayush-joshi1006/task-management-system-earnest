@@ -7,7 +7,8 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 
-const REFRESH_COOKIE_NAME = "jid"; 
+const REFRESH_COOKIE_NAME = "jid";
+const isProd = process.env.NODE_ENV === "production";
 
 export async function register(req: Request, res: Response) {
   try {
@@ -49,11 +50,12 @@ export async function login(req: Request, res: Response) {
     // send refresh token as httpOnly cookie
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProd, // true in prod, false in dev
+      sameSite: isProd ? "none" : "lax", // none+secure for cross-site prod; lax for dev
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (client-side fallback)
     });
-
+    console.log("Login -> Set-Cookie header:", res.getHeader("Set-Cookie"));
     return res.json({ accessToken });
   } catch (err) {
     console.error(err);
@@ -86,8 +88,9 @@ export async function refresh(req: Request, res: Response) {
 
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProd, // true in prod, false in dev
+      sameSite: isProd ? "none" : "lax", // none+secure for cross-site prod; lax for dev
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
