@@ -11,7 +11,7 @@ const app = express();
 // configure CORS to allow your frontend origin(s)
 app.use(
   cors({
-    origin: ["http://localhost:3000"], // add your frontend URL(s)
+    origin: [process.env.FRONTEND_URL!], // add your frontend URL(s)
     credentials: true, // allows cookies to be sent
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],

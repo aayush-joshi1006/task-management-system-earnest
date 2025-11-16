@@ -57,7 +57,45 @@ This backend provides user authentication (JWT access + refresh tokens), task ma
 
 ## 📸 API Routes Screenshot
 
-(Add screenshot here)
+### Route: POST /auth/login
+
+![Login Route Screenshot](./assets/screenshots/login_user.png)
+
+### Route: POST /auth/register
+
+![Register Route Screenshot](./assets/screenshots/register_user.png)
+
+### Route: POST /auth/refresh
+
+![Refresh Token Route Screenshot](./assets/screenshots/refresh_user.png)
+
+### Route: POST /auth/logout
+
+![Logout Route Screenshot](./assets/screenshots/logout_user.png)
+
+### Route: GET /tasks
+
+![Get All Tasks Route Screenshot](./assets/screenshots/get_all_tasks.png)
+
+### Route: GET /tasks/:id
+
+![Get Current Task Route Screenshot](./assets/screenshots/get_current_task.png)
+
+### Route: POST /tasks
+
+![Create Task Route Screenshot](./assets/screenshots/add_task.png)
+
+### Route: PATCH /tasks/:id
+
+![Modify Task Route Screenshot](./assets/screenshots/update_task.png)
+
+### Route: DELETE /tasks/:id
+
+![Delete Task Route Screenshot](./assets/screenshots/delete_task.png)
+
+### Route: POST /tasks/:id/toggle
+
+![Toggle Task Status Route Screenshot](./assets/screenshots/toggle_Status.png)
 
 ---
 
@@ -81,6 +119,7 @@ ACCESS_TOKEN_EXPIRES_IN="your_access_expire"
 REFRESH_TOKEN_EXPIRES_IN="your_refresh_expire"
 PORT="port_number"
 NODE_ENV="production || development"
+FRONTEND_URL=http://localhost:3000
 ```
 
 ### 3. Run Prisma migrations
